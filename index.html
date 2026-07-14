@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sigo Pasappdo?</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+:root{
+  --bg: #F7F1E6;
+  --bg-panel: #EFE3CF;
+  --bg-panel-2: #FBF8F2;
+  --frame: #E1D3B8;
+  --ink: #4A4032;
+  --ink-dim: #9C907C;
+  --line: #E3D6BC;
+  --accent: #A08363;
+  --accent-dark: #7C6449;
+  --accent-soft: rgba(160,131,99,0.14);
+  --rose: #C7ABA4;
+  --blue: #9BAAB0;
+  --highlight: #BE7E5E;
+
+  /* colores de nota, consistentes en toda la app */
+  --grade-a: #5E9E6F;
+  --grade-b: #5385B8;
+  --grade-c: #C9A227;
+  --grade-d: #D97D3D;
+  --grade-f: #C24B45;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  padding: 24px 14px 60px;
+}
+
+.frame{
+  max-width: 640px;
+  margin: 0 auto;
+  border: 1px solid var(--frame);
+  border-radius: 18px;
+  background: var(--bg-panel);
+  box-shadow: 0 20px 45px rgba(94,78,44,0.1);
+  padding: 28px 22px 24px;
+  position: relative;
+}
+
+h1.title{
+  font-family:'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 2.1rem;
+  text-align:center;
+  margin: 0 0 4px;
+  color: var(--accent-dark);
+  letter-spacing: 0.2px;
+}
+.title .app-highlight{ color: var(--highlight); }
+.subtitle{
+  text-align:center;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  margin: 0 0 22px;
+}
+
+.path-wrap{ position: relative; margin: 6px 0 30px; padding: 0 6px; }
+.path-line{ width:100%; height: 18px; display:block; }
+.checkpoints{ display:flex; justify-content:space-between; margin-top: -30px; position: relative; }
+.checkpoint{ display:flex; flex-direction:column; align-items:center; gap:6px; font-family:'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--ink-dim); width: 25%; }
+.checkpoint .dot{ width: 16px; height:16px; border-radius:50%; border: 2px solid var(--line); background: var(--bg-panel-2); }
+.checkpoint.active .dot{ border-color: var(--accent); background: var(--accent); box-shadow:0 0 0 4px var(--accent-soft);}
+.checkpoint.done .dot{ border-color: var(--grade-a); background: var(--grade-a); }
+.checkpoint.active span.label{ color: var(--accent-dark); font-weight:600; }
+.checkpoint.done span.label{ color: var(--grade-a); }
+
+.panel{ background: var(--bg-panel-2); border-radius: 12px; padding: 18px 16px; margin-bottom: 16px; border: 1px solid var(--line); }
+
+h2.step-title{ font-family:'Fredoka', sans-serif; font-weight:600; font-size: 1.3rem; margin: 0 0 4px; color: var(--accent-dark); }
+p.step-hint{ color: var(--ink-dim); font-size: 0.85rem; margin: 0 0 16px; line-height:1.4; }
+
+.type-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+.type-btn{
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 10px 8px;
+  font-family:'Inter';
+  font-size: 0.85rem;
+  cursor:pointer;
+  text-align:left;
+  transition: all .15s ease;
+}
+.type-btn:hover{ border-color: var(--accent); }
+.type-btn.selected{ border-color: var(--accent); background: var(--accent-soft); color: var(--accent-dark); font-weight:600; }
+
+.added-list{ display:flex; flex-direction:column; gap:8px; margin-top: 10px; }
+.added-item{ display:flex; align-items:center; gap:8px; background: var(--bg); border-radius: 8px; padding: 8px 10px; border-left: 3px solid var(--blue); }
+.added-item input.label-input{ flex:1; background:transparent; border:none; border-bottom: 1px dashed var(--line); color: var(--ink); font-family:'Inter'; font-size: 0.9rem; padding: 2px 2px; }
+.added-item input.label-input:focus{ outline:none; border-color: var(--accent); }
+.remove-btn{ background:none; border:none; color: var(--grade-f); cursor:pointer; font-size:1.1rem; line-height:1; padding: 2px 6px; }
+
+.weight-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; background: var(--bg); padding: 10px; border-radius: 8px; }
+.weight-row .wname{ flex:1; font-size:0.9rem; }
+.weight-row input.weight-input{ width: 70px; background: #fff; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:6px 8px; font-family:'JetBrains Mono'; font-size:0.9rem; text-align:right; }
+.weight-total{ margin-top: 10px; padding: 10px; border-radius: 8px; text-align:center; font-family:'JetBrains Mono'; font-weight:700; font-size:1rem; }
+.weight-total.ok{ background: rgba(139,158,122,0.16); color: var(--grade-a); }
+.weight-total.bad{ background: rgba(176,114,104,0.14); color: var(--grade-f); }
+
+.cat-block{ background: var(--bg); border-radius: 10px; padding: 12px; margin-bottom: 12px; border-left: 3px solid var(--rose); }
+.cat-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.cat-header .cname{ font-weight:600; font-size:0.95rem; }
+.cat-header .cweight{ color: var(--ink-dim); font-family:'JetBrains Mono'; font-size:0.8rem; }
+.entry-row{ display:flex; gap:6px; align-items:center; margin-bottom:6px; flex-wrap:wrap; }
+.entry-row input.num-input{ background: #fff; border:1px solid var(--line); color:var(--ink); border-radius:6px; padding:6px 8px; font-family:'JetBrains Mono'; font-size:0.85rem; width: 70px; }
+.entry-row input.num-input:disabled{ opacity:0.4; }
+.entry-row span.slash{ color: var(--ink-dim); }
+.entry-row .remove-btn{ font-size:0.95rem; }
+.pending-label{ display:flex; align-items:center; gap:4px; font-size:0.72rem; color: var(--ink-dim); cursor:pointer; }
+.pending-label input{ accent-color: var(--accent); }
+.add-entry-btn{ background:none; border: 1px dashed var(--blue); color: var(--blue); border-radius:6px; padding: 5px 10px; font-size:0.78rem; cursor:pointer; margin-top:2px; }
+.cat-avg{ margin-top:8px; font-family:'JetBrains Mono'; font-size:0.82rem; color: var(--grade-a); }
+.cat-avg .pend{ color: var(--grade-c); display:block; margin-top:2px; }
+
+/* remove number input spinners */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+input[type=number]{ -moz-appearance: textfield; }
+
+.nav-buttons{ display:flex; gap:10px; margin-top: 18px; }
+.btn{ flex:1; padding: 12px; border-radius: 10px; border: none; font-family:'Inter'; font-weight:600; font-size:0.95rem; cursor:pointer; transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, color .15s ease, border-color .15s ease; }
+.btn:hover:not(:disabled){ transform: translateY(-2px); box-shadow: 0 8px 18px rgba(94,78,44,0.16); }
+.btn:active:not(:disabled){ transform: translateY(0) scale(0.97); box-shadow: 0 3px 8px rgba(94,78,44,0.12); }
+.btn-primary{ background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled){ background: var(--accent-dark); }
+.btn-primary:disabled{ background: #D8CFBC; color: #A79E8C; cursor:not-allowed; box-shadow:none; transform:none; }
+.btn-secondary{ background: transparent; border: 1.5px solid var(--line); color: var(--ink-dim); }
+.btn-secondary:hover:not(:disabled){ background: var(--accent-soft); border-color: var(--accent); color: var(--accent-dark); }
+.btn-danger{ background: transparent; border: 1.5px solid var(--grade-f); color: var(--grade-f); }
+.btn-danger:hover:not(:disabled){ background: rgba(194,75,69,0.1); }
+
+.credits{
+  text-align:center;
+  margin-top:18px;
+  color:var(--ink-dim);
+  font-size:0.78rem;
+  letter-spacing:0.2px;
+}
+.credits strong{ color:var(--accent-dark); font-weight:700; }
+
+.error-msg{ color: var(--ink-dim); font-size:0.8rem; margin-top:6px; }
+
+.score-hero{ text-align:center; padding: 22px 10px; margin-bottom: 14px; background: var(--bg-panel-2); border-radius: 12px; border: 1px solid var(--line); }
+.score-hero .big-num{ font-family:'JetBrains Mono'; font-weight:700; font-size: 3rem; line-height:1; }
+.score-hero .letter{ font-family:'Fredoka'; font-weight:600; font-size:1.3rem; margin-top: 4px; }
+.score-hero .caption{ color: var(--ink-dim); font-size:0.8rem; margin-top:6px; }
+
+.grade-A{ color: var(--grade-a); }
+.grade-B{ color: var(--grade-b); }
+.grade-C{ color: var(--grade-c); }
+.grade-D{ color: var(--grade-d); }
+.grade-F{ color: var(--grade-f); }
+
+table.results-table{ width:100%; border-collapse: collapse; font-family:'JetBrains Mono'; font-size:0.85rem; }
+table.results-table th, table.results-table td{ padding: 9px 8px; text-align:center; border-bottom: 1px dashed var(--line); }
+table.results-table th{ color: var(--ink-dim); font-weight:600; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;}
+.tag-ok{ color: var(--grade-a); font-weight:600; }
+.tag-bad{ color: var(--grade-f); font-weight:600; }
+.tag-need{ color: var(--grade-c); font-weight:700; }
+
+.summary-row{ display:flex; justify-content:space-between; font-size:0.85rem; padding:6px 0; border-bottom: 1px dashed var(--line);}
+.summary-row:last-child{ border-bottom:none; }
+.summary-row .val{ font-family:'JetBrains Mono'; font-weight:600; }
+
+.note-box{ background: rgba(195,160,99,0.14); border-left: 3px solid var(--grade-c); padding: 10px 12px; border-radius: 6px; font-size:0.8rem; color: var(--ink-dim); margin-top:12px; line-height:1.5; }
+
+@media (max-width: 420px){
+  h1.title{ font-size: 1.7rem; }
+  .type-grid{ grid-template-columns: 1fr 1fr; }
+  .score-hero .big-num{ font-size: 2.3rem; }
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <h1 class="title">Sigo Pas<span class="app-highlight">app</span>do?</h1>
+  <p class="subtitle">Calculadora de notas por ponderaciones</p>
+
+  <div class="path-wrap">
+    <svg class="path-line" viewBox="0 0 400 18" preserveAspectRatio="none">
+      <line x1="10" y1="9" x2="390" y2="9" stroke="#D8C79E" stroke-width="2" stroke-dasharray="6,6" opacity="0.7"/>
+    </svg>
+    <div class="checkpoints" id="checkpoints"></div>
+  </div>
+
+  <div id="app"></div>
+  <div class="credits">Creado por <strong>BugCak3</strong></div>
+</div>
+
+<script>
+const CATEGORY_TYPES = ["Tareas","Proyectos","Asistencia","Portafolio","Parciales","Semestral","Laboratorios","Otros"];
+const THRESHOLDS = [
+  {letter:'A', min:91},
+  {letter:'B', min:81},
+  {letter:'C', min:71},
+  {letter:'D', min:61},
+];
+
+let state = {
+  step: 1,
+  categories: [] // {id, type, label, weight, entries:[{score,max,pending}]}
+};
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function letterFor(grade){ for(const t of THRESHOLDS){ if(grade >= t.min) return t.letter; } return 'F'; }
+function fmt(n){ if(n === null || n === undefined || isNaN(n)) return '—'; return (Math.round(n*10)/10).toString(); }
+function escapeHtml(s){ const d = document.createElement('div'); d.innerText = s; return d.innerHTML; }
+
+// ---------- STEP 1: categorias ----------
+function renderStep1(){
+  return `
+    <div class="panel">
+      <h2 class="step-title">1. ¿Cómo se divide la materia?</h2>
+      <p class="step-hint">Toca los tipos que apliquen. Vuelve a tocar uno para quitarlo. Puedes renombrarlos abajo si quieres.</p>
+      <div class="type-grid">
+        ${CATEGORY_TYPES.map(t => {
+          if(t === 'Otros'){
+            return `<button class="type-btn" onclick="addOtrosCategory()">+ Otros</button>`;
+          }
+          return `<button class="type-btn ${state.categories.some(c=>c.type===t)?'selected':''}" onclick="toggleCategory('${t}')">${state.categories.some(c=>c.type===t)?'✓ ':'+ '}${t}</button>`;
+        }).join('')}
+      </div>
+      <div class="added-list">
+        ${state.categories.map(c => `
+          <div class="added-item">
+            <input class="label-input" value="${escapeHtml(c.label)}" oninput="renameCategory('${c.id}', this.value)">
+            <button class="remove-btn" onclick="removeCategory('${c.id}')">✕</button>
+          </div>
+        `).join('')}
+      </div>
+      ${state.categories.length === 0 ? `<p class="error-msg">Aún no agregas ninguna categoría.</p>` : ''}
+    </div>
+    <div class="nav-buttons">
+      <button class="btn btn-primary" ${state.categories.length===0?'disabled':''} onclick="goStep(2)">Siguiente →</button>
+    </div>
+  `;
+}
+
+function addOtrosCategory(){
+  const count = state.categories.filter(c=>c.type==='Otros').length;
+  const label = count === 0 ? 'Otros' : `Otros ${count+1}`;
+  state.categories.push({ id: uid(), type: 'Otros', label, weight: 0, entries: [{score:'', max:100, pending:false}] });
+  render();
+}
+function toggleCategory(type){
+  const existing = state.categories.find(c=>c.type===type);
+  if(existing){
+    state.categories = state.categories.filter(c=>c.id!==existing.id);
+  } else {
+    state.categories.push({ id: uid(), type, label: type, weight: 0, entries: [{score:'', max:100, pending:false}] });
+  }
+  render();
+}
+function renameCategory(id, val){
+  const c = state.categories.find(c=>c.id===id);
+  if(c) c.label = val;
+}
+function removeCategory(id){
+  state.categories = state.categories.filter(c=>c.id!==id);
+  render();
+}
+
+// ---------- STEP 2: ponderaciones ----------
+function weightTotalNow(){ return state.categories.reduce((s,c)=> s + (parseFloat(c.weight)||0), 0); }
+
+function renderStep2(){
+  const total = weightTotalNow();
+  const ok = Math.abs(total - 100) < 0.001;
+  return `
+    <div class="panel">
+      <h2 class="step-title">2. Ponderación de cada categoría</h2>
+      <p class="step-hint">Escribe el porcentaje que vale cada una. Deben sumar exactamente 100%.</p>
+      ${state.categories.map(c => `
+        <div class="weight-row">
+          <div class="wname">${escapeHtml(c.label)}</div>
+          <input class="weight-input" type="number" min="0" max="100" step="0.5" value="${c.weight}" oninput="setWeight('${c.id}', this.value)">
+          <span style="color:var(--chalk-dim); font-family:'JetBrains Mono'; font-size:0.85rem;">%</span>
+        </div>
+      `).join('')}
+      <div class="weight-total ${ok ? 'ok' : 'bad'}" id="weightTotal">
+        Total: ${fmt(total)}% ${ok ? '✓ Cuadra perfecto' : '— debe sumar 100%'}
+      </div>
+    </div>
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="goStep(1)">← Atrás</button>
+      <button class="btn btn-primary" id="nextBtn2" ${ok?'':'disabled'} onclick="goStep(3)">Siguiente →</button>
+    </div>
+  `;
+}
+function setWeight(id, val){
+  const c = state.categories.find(c=>c.id===id);
+  if(c) c.weight = val;
+  const total = weightTotalNow();
+  const ok = Math.abs(total - 100) < 0.001;
+  const totalEl = document.getElementById('weightTotal');
+  if(totalEl){
+    totalEl.className = 'weight-total ' + (ok ? 'ok' : 'bad');
+    totalEl.textContent = `Total: ${fmt(total)}% ${ok ? '✓ Cuadra perfecto' : '— debe sumar 100%'}`;
+  }
+  const nextBtn = document.getElementById('nextBtn2');
+  if(nextBtn) nextBtn.disabled = !ok;
+}
+
+// ---------- STEP 3: notas ----------
+function categoryBreakdown(c){
+  let knownScore=0, knownMax=0, pendingMax=0, pendingCount=0, knownCount=0;
+  c.entries.forEach(e=>{
+    const max = parseFloat(e.max);
+    if(!max || max<=0) return;
+    if(e.pending){ pendingMax += max; pendingCount++; }
+    else {
+      const score = parseFloat(e.score);
+      if(e.score !== '' && !isNaN(score)){ knownScore += score; knownMax += max; knownCount++; }
+    }
+  });
+  return { knownScore, knownMax, pendingMax, totalMax: knownMax+pendingMax, pendingCount, knownCount };
+}
+
+function renderCatAvgHtml(c){
+  const b = categoryBreakdown(c);
+  let html = '';
+  if(b.knownMax > 0){
+    html += `Promedio de lo ingresado: ${fmt(b.knownScore/b.knownMax*100)}% (${b.knownCount} nota${b.knownCount>1?'s':''})`;
+  } else {
+    html += `Aún sin notas ingresadas`;
+  }
+  if(b.pendingCount > 0){
+    html += `<span class="pend">Pendiente: ${b.pendingCount} nota${b.pendingCount>1?'s':''} sin hacer</span>`;
+  }
+  return html;
+}
+
+function sortedCategoriesForStep3(){
+  const others = state.categories.filter(c => c.type !== 'Parciales' && c.type !== 'Semestral');
+  const parciales = state.categories.filter(c => c.type === 'Parciales');
+  const semestral = state.categories.filter(c => c.type === 'Semestral');
+  others.sort((a,b) => (parseFloat(b.weight)||0) - (parseFloat(a.weight)||0));
+  return [...others, ...parciales, ...semestral];
+}
+
+function renderStep3(){
+  return `
+    <div class="panel">
+      <h2 class="step-title">3. Tus notas</h2>
+      <p class="step-hint">Ingresa lo que sacaste sobre el puntaje máximo de cada evaluación. Si una nota en particular aún no la haces, marca "Aún no la hago" en esa fila (las demás de la categoría no se afectan).</p>
+      ${sortedCategoriesForStep3().map(c => `
+        <div class="cat-block">
+          <div class="cat-header">
+            <span class="cname">${escapeHtml(c.label)}</span>
+            <span class="cweight">${fmt(parseFloat(c.weight)||0)}%</span>
+          </div>
+          <div id="entries-${c.id}">
+            ${c.entries.map((e,idx) => `
+              <div class="entry-row">
+                <input class="num-input" type="number" placeholder="sacaste" value="${e.score}" ${e.pending?'disabled':''} oninput="setEntryField('${c.id}',${idx},'score',this.value)">
+                <span class="slash">/</span>
+                <input class="num-input" type="number" placeholder="máx" value="${e.max}" oninput="setEntryField('${c.id}',${idx},'max',this.value)">
+                <label class="pending-label">
+                  <input type="checkbox" ${e.pending?'checked':''} onchange="setEntryPending('${c.id}',${idx},this.checked)">
+                  Aún no la hago
+                </label>
+                ${c.entries.length > 1 ? `<button class="remove-btn" onclick="removeEntry('${c.id}',${idx})">✕</button>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          <button class="add-entry-btn" onclick="addEntry('${c.id}')">+ agregar otra nota</button>
+          <div class="cat-avg" id="avg-${c.id}">${renderCatAvgHtml(c)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="goStep(2)">← Atrás</button>
+      <button class="btn btn-primary" onclick="goStep(4)">Ver resultado →</button>
+    </div>
+  `;
+}
+
+function updateCatAvgDisplay(id){
+  const c = state.categories.find(c=>c.id===id);
+  const el = document.getElementById('avg-'+id);
+  if(c && el) el.innerHTML = renderCatAvgHtml(c);
+}
+
+function setEntryField(id, idx, field, val){
+  const c = state.categories.find(c=>c.id===id);
+  if(c) c.entries[idx][field] = val;
+  updateCatAvgDisplay(id);
+}
+function setEntryPending(id, idx, val){
+  const c = state.categories.find(c=>c.id===id);
+  if(c) c.entries[idx].pending = val;
+  render();
+}
+function addEntry(id){
+  const c = state.categories.find(c=>c.id===id);
+  if(c) c.entries.push({score:'', max:100, pending:false});
+  render();
+}
+function removeEntry(id, idx){
+  const c = state.categories.find(c=>c.id===id);
+  if(c) c.entries.splice(idx,1);
+  render();
+}
+
+// ---------- STEP 4: resultados ----------
+function computeResults(){
+  let completedContribution = 0;
+  let pendingWeightTotal = 0;
+  const pendingCatLabels = [];
+
+  state.categories.forEach(c => {
+    const w = parseFloat(c.weight) || 0;
+    const b = categoryBreakdown(c);
+    if(b.totalMax <= 0){
+      pendingWeightTotal += w;
+      pendingCatLabels.push(c.label);
+      return;
+    }
+    completedContribution += w * (b.knownScore / b.totalMax);
+    const pendingShare = w * (b.pendingMax / b.totalMax);
+    if(pendingShare > 0.0001){
+      pendingWeightTotal += pendingShare;
+      pendingCatLabels.push(c.label);
+    }
+  });
+
+  const maxPossible = completedContribution + pendingWeightTotal;
+  const minPossible = completedContribution;
+
+  const rows = THRESHOLDS.map(t => {
+    if(pendingWeightTotal <= 0.0001){
+      return {letter:t.letter, min:t.min, status: maxPossible >= t.min ? 'ok' : 'bad', needed: null};
+    }
+    const needed = (t.min - completedContribution) / (pendingWeightTotal/100);
+    if(needed <= 0) return {letter:t.letter, min:t.min, status:'ok', needed:0};
+    if(needed > 100) return {letter:t.letter, min:t.min, status:'bad', needed:needed};
+    return {letter:t.letter, min:t.min, status:'need', needed:needed};
+  });
+
+  return { completedContribution, pendingWeightTotal, maxPossible, minPossible, rows, pendingCatLabels: [...new Set(pendingCatLabels)] };
+}
+
+function renderParcialSemestralTable(r){
+  const parcialCat = state.categories.find(c=>c.type==='Parciales');
+  const semestralCat = state.categories.find(c=>c.type==='Semestral');
+  if(!parcialCat || !semestralCat) return '';
+
+  const bP = categoryBreakdown(parcialCat);
+  const bS = categoryBreakdown(semestralCat);
+  if(bP.pendingMax <= 0 || bS.pendingMax <= 0) return '';
+
+  const wP = parseFloat(parcialCat.weight) || 0;
+  const wS = parseFloat(semestralCat.weight) || 0;
+  const Wp = wP * (bP.pendingMax / bP.totalMax); // puntos de peso en juego en los parciales pendientes
+  const Ws = wS * (bS.pendingMax / bS.totalMax); // puntos de peso en juego en el semestral
+  const base = r.completedContribution; // asumiendo 0% en todo lo pendiente
+
+  const rowsHtml = THRESHOLDS.map(t => {
+    // asumimos que sacas el mismo % tanto en el parcial pendiente como en el semestral
+    const totalPendingWeight = Wp + Ws;
+    const needed = (t.min - base) / (totalPendingWeight / 100);
+    let cell;
+    if(needed <= 0) cell = '<span class="tag-ok">Asegurado ✓</span>';
+    else if(needed > 100) cell = '<span class="tag-bad">No alcanzable ✕</span>';
+    else cell = `<span class="tag-need">${fmt(needed)}%</span>`;
+    const parcialCell = needed <= 0 ? '<span class="tag-ok">✓</span>' : (needed > 100 ? '<span class="tag-bad">✕</span>' : `<span class="tag-need">${fmt(needed)}%</span>`);
+    return `<tr><td class="grade-${t.letter}">${t.letter}</td><td>${parcialCell}</td><td>${cell}</td></tr>`;
+  }).join('');
+
+  const otherPending = r.pendingCatLabels.filter(l => l !== parcialCat.label && l !== semestralCat.label);
+
+  return `
+    <div class="panel">
+      <h2 class="step-title" style="font-size:1.1rem;">Parcial pendiente + Semestral</h2>
+      <p class="step-hint">Para cada nota, esto es lo que necesitas sacar en <strong>${escapeHtml(parcialCat.label)}</strong> y en <strong>${escapeHtml(semestralCat.label)}</strong> (el mismo % en ambos) para llegar justo a esa nota.</p>
+      <table class="results-table">
+        <thead><tr><th>Nota</th><th>${escapeHtml(parcialCat.label)}</th><th>${escapeHtml(semestralCat.label)}</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+      ${otherPending.length ? `<div class="note-box">Esta tabla asume que sacas 0% en lo demás que tienes pendiente (${otherPending.map(escapeHtml).join(', ')}). Si también avanzas ahí, necesitarás menos de lo que muestra la tabla.</div>` : ''}
+    </div>
+  `;
+}
+
+function renderStep4(){
+  const r = computeResults();
+  const noPending = r.pendingWeightTotal <= 0.0001;
+
+  let heroBlock;
+  if(noPending){
+    const finalLetter = letterFor(r.maxPossible);
+    heroBlock = `
+      <div class="score-hero">
+        <div class="big-num grade-${finalLetter}">${fmt(r.maxPossible)}%</div>
+        <div class="letter grade-${finalLetter}">Nota final: ${finalLetter}</div>
+        <div class="caption">Ya tienes todas tus notas registradas</div>
+      </div>
+    `;
+  } else {
+    const maxLetter = letterFor(r.maxPossible);
+    const minLetter = letterFor(r.minPossible);
+    heroBlock = `
+      <div class="score-hero">
+        <div class="big-num grade-${maxLetter}">${fmt(r.maxPossible)}%</div>
+        <div class="letter grade-${maxLetter}">Máximo posible: ${maxLetter}</div>
+        <div class="caption">Si sacas 100% en todo lo pendiente</div>
+      </div>
+      <div class="panel">
+        <div class="summary-row"><span>Nota asegurada (si sacas 0% en lo pendiente)</span><span class="val grade-${minLetter}">${fmt(r.minPossible)}% (${minLetter})</span></div>
+        <div class="summary-row"><span>Peso pendiente</span><span class="val">${fmt(r.pendingWeightTotal)}%</span></div>
+        <div class="summary-row"><span>Pendiente en</span><span class="val">${r.pendingCatLabels.map(escapeHtml).join(', ')}</span></div>
+      </div>
+    `;
+  }
+
+  let tableBlock = '';
+  if(!noPending){
+    const singlePending = r.pendingCatLabels.length === 1;
+    tableBlock = `
+      <div class="panel">
+        <h2 class="step-title" style="font-size:1.1rem;">¿Cuánto necesitas ${singlePending ? 'en ' + escapeHtml(r.pendingCatLabels[0]) : 'en promedio en lo pendiente'}?</h2>
+        <table class="results-table">
+          <thead><tr><th>Nota</th><th>Mínimo</th><th>Necesitas sacar</th></tr></thead>
+          <tbody>
+            ${r.rows.map(row => `
+              <tr>
+                <td class="grade-${row.letter}">${row.letter}</td>
+                <td>${row.min}%</td>
+                <td>${
+                  row.status === 'ok' ? '<span class="tag-ok">Asegurado ✓</span>' :
+                  row.status === 'bad' ? '<span class="tag-bad">No alcanzable ✕</span>' :
+                  `<span class="tag-need">${fmt(row.needed)}%</span>`
+                }</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ${!singlePending ? `<div class="note-box">Tienes pendientes en más de un lugar (${r.pendingCatLabels.map(escapeHtml).join(', ')}), así que el número de la tabla es el promedio combinado que necesitas entre todo lo pendiente, ponderado según su peso.</div>` : ''}
+      </div>
+    `;
+  }
+
+  const dualTableBlock = noPending ? '' : renderParcialSemestralTable(r);
+
+  return `
+    ${heroBlock}
+    ${tableBlock}
+    ${dualTableBlock}
+    <div class="nav-buttons">
+      <button class="btn btn-secondary" onclick="goStep(3)">← Editar notas</button>
+      <button class="btn btn-danger" onclick="resetAll()">Empezar de nuevo</button>
+    </div>
+  `;
+}
+
+function resetAll(){ state = { step: 1, categories: [] }; render(); }
+function goStep(n){ state.step = n; render(); }
+
+function renderCheckpoints(){
+  const labels = ['Categorías','Ponderación','Notas','Resultado'];
+  document.getElementById('checkpoints').innerHTML = labels.map((l, i) => {
+    const stepNum = i+1;
+    let cls = '';
+    if(stepNum < state.step) cls = 'done';
+    else if(stepNum === state.step) cls = 'active';
+    return `<div class="checkpoint ${cls}"><div class="dot"></div><span class="label">${l}</span></div>`;
+  }).join('');
+}
+
+function render(){
+  renderCheckpoints();
+  const app = document.getElementById('app');
+  if(state.step === 1) app.innerHTML = renderStep1();
+  else if(state.step === 2) app.innerHTML = renderStep2();
+  else if(state.step === 3) app.innerHTML = renderStep3();
+  else app.innerHTML = renderStep4();
+}
+
+render();
+</script>
+</body>
+</html>
