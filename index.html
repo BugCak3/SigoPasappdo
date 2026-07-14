@@ -130,7 +130,7 @@ p.step-hint{ color: var(--ink-dim); font-size: 0.85rem; margin: 0 0 16px; line-h
 /* remove number input spinners */
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
-input[type=number]{ -moz-appearance: textfield; }
+input[type=number]{ -moz-appearance: textfield; appearance: textfield; }
 
 .nav-buttons{ display:flex; gap:10px; margin-top: 18px; }
 .btn{ flex:1; padding: 12px; border-radius: 10px; border: none; font-family:'Inter'; font-weight:600; font-size:0.95rem; cursor:pointer; transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, color .15s ease, border-color .15s ease; }
