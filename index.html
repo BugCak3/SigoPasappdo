@@ -6,7 +6,7 @@
 <title>Sigo Pasappdo?</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
-/*XD*/
+
 :root{
   --bg: #F7F1E6;
   --bg-panel: #EFE3CF;
@@ -130,7 +130,7 @@ p.step-hint{ color: var(--ink-dim); font-size: 0.85rem; margin: 0 0 16px; line-h
 /* remove number input spinners */
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
-input[type=number]{ -moz-appearance: textfield; appearance: textfield; }
+input[type=number]{ -moz-appearance: textfield; }
 
 .nav-buttons{ display:flex; gap:10px; margin-top: 18px; }
 .btn{ flex:1; padding: 12px; border-radius: 10px; border: none; font-family:'Inter'; font-weight:600; font-size:0.95rem; cursor:pointer; transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, color .15s ease, border-color .15s ease; }
@@ -154,6 +154,12 @@ input[type=number]{ -moz-appearance: textfield; appearance: textfield; }
 .credits strong{ color:var(--accent-dark); font-weight:700; }
 
 .error-msg{ color: var(--ink-dim); font-size:0.8rem; margin-top:6px; }
+
+.dual-slider-row{ margin: 0 0 16px; }
+.dual-slider-row:first-of-type{ margin-top: 4px; }
+.dual-slider-row label{ display:block; font-size:0.85rem; color: var(--ink-dim); margin-bottom:8px; }
+.dual-slider-row label strong{ color: var(--accent-dark); font-family:'JetBrains Mono'; }
+.dual-slider-row input[type=range]{ width:100%; accent-color: var(--accent); cursor:pointer; }
 
 .score-hero{ text-align:center; padding: 22px 10px; margin-bottom: 14px; background: var(--bg-panel-2); border-radius: 12px; border: 1px solid var(--line); }
 .score-hero .big-num{ font-family:'JetBrains Mono'; font-weight:700; font-size: 3rem; line-height:1; }
@@ -455,6 +461,31 @@ function computeResults(){
   return { completedContribution, pendingWeightTotal, maxPossible, minPossible, rows, pendingCatLabels: [...new Set(pendingCatLabels)] };
 }
 
+let dualSliderVals = [];
+let dualCtx = null;
+
+function buildDualRows(){
+  if(!dualCtx) return '';
+  const { weights, Ws, base } = dualCtx;
+  return THRESHOLDS.map(t => {
+    const contributionParcial = weights.reduce((sum, w, i) => sum + w * ((dualSliderVals[i]||0)/100), 0);
+    const needed = (t.min - (base + contributionParcial)) / (Ws/100);
+    let cell;
+    if(needed <= 0) cell = '<span class="tag-ok">Asegurado ✓</span>';
+    else if(needed > 100) cell = '<span class="tag-bad">No alcanzable ✕</span>';
+    else cell = `<span class="tag-need">${fmt(needed)}%</span>`;
+    return `<tr><td class="grade-${t.letter}">${t.letter}</td><td>${cell}</td></tr>`;
+  }).join('');
+}
+
+function onDualSliderInput(idx, val){
+  dualSliderVals[idx] = parseInt(val, 10);
+  const label = document.getElementById('dualSliderVal-'+idx);
+  if(label) label.textContent = dualSliderVals[idx];
+  const body = document.getElementById('dualTableBody');
+  if(body) body.innerHTML = buildDualRows();
+}
+
 function renderParcialSemestralTable(r){
   const parcialCat = state.categories.find(c=>c.type==='Parciales');
   const semestralCat = state.categories.find(c=>c.type==='Semestral');
@@ -466,31 +497,37 @@ function renderParcialSemestralTable(r){
 
   const wP = parseFloat(parcialCat.weight) || 0;
   const wS = parseFloat(semestralCat.weight) || 0;
-  const Wp = wP * (bP.pendingMax / bP.totalMax); // puntos de peso en juego en los parciales pendientes
   const Ws = wS * (bS.pendingMax / bS.totalMax); // puntos de peso en juego en el semestral
-  const base = r.completedContribution; // asumiendo 0% en todo lo pendiente
+  const base = r.completedContribution; // lo asegurado, asumiendo 0% en todo lo pendiente (incluyendo estas dos)
 
-  const rowsHtml = THRESHOLDS.map(t => {
-    // asumimos que sacas el mismo % tanto en el parcial pendiente como en el semestral
-    const totalPendingWeight = Wp + Ws;
-    const needed = (t.min - base) / (totalPendingWeight / 100);
-    let cell;
-    if(needed <= 0) cell = '<span class="tag-ok">Asegurado ✓</span>';
-    else if(needed > 100) cell = '<span class="tag-bad">No alcanzable ✕</span>';
-    else cell = `<span class="tag-need">${fmt(needed)}%</span>`;
-    const parcialCell = needed <= 0 ? '<span class="tag-ok">✓</span>' : (needed > 100 ? '<span class="tag-bad">✕</span>' : `<span class="tag-need">${fmt(needed)}%</span>`);
-    return `<tr><td class="grade-${t.letter}">${t.letter}</td><td>${parcialCell}</td><td>${cell}</td></tr>`;
-  }).join('');
+  // una barrita por cada parcial pendiente individual
+  const pendingParcialEntries = parcialCat.entries.filter(e => e.pending && parseFloat(e.max) > 0);
+  const weights = pendingParcialEntries.map(e => wP * (parseFloat(e.max) / bP.totalMax));
+
+  if(dualSliderVals.length !== weights.length){
+    dualSliderVals = weights.map(() => 50);
+  }
+
+  dualCtx = { weights, Ws, base };
+  const rowsHtml = buildDualRows();
+
+  const slidersHtml = weights.map((w, i) => `
+    <div class="dual-slider-row">
+      <label>Si sacas <strong id="dualSliderVal-${i}">${dualSliderVals[i]}</strong>% en ${escapeHtml(parcialCat.label)}${weights.length > 1 ? ' pendiente ' + (i+1) : ' pendiente'}:</label>
+      <input type="range" min="0" max="100" step="1" value="${dualSliderVals[i]}" oninput="onDualSliderInput(${i}, this.value)">
+    </div>
+  `).join('');
 
   const otherPending = r.pendingCatLabels.filter(l => l !== parcialCat.label && l !== semestralCat.label);
 
   return `
     <div class="panel">
-      <h2 class="step-title" style="font-size:1.1rem;">Parcial pendiente + Semestral</h2>
-      <p class="step-hint">Para cada nota, esto es lo que necesitas sacar en <strong>${escapeHtml(parcialCat.label)}</strong> y en <strong>${escapeHtml(semestralCat.label)}</strong> (el mismo % en ambos) para llegar justo a esa nota.</p>
+      <h2 class="step-title" style="font-size:1.1rem;">Parcial${weights.length > 1 ? 'es' : ''} pendiente${weights.length > 1 ? 's' : ''} + Semestral</h2>
+      <p class="step-hint">Se compensan entre sí: si te va bien en uno, necesitas menos en el otro. Mueve los controles para ver cómo cambia lo que necesitas en <strong>${escapeHtml(semestralCat.label)}</strong>.</p>
+      ${slidersHtml}
       <table class="results-table">
-        <thead><tr><th>Nota</th><th>${escapeHtml(parcialCat.label)}</th><th>${escapeHtml(semestralCat.label)}</th></tr></thead>
-        <tbody>${rowsHtml}</tbody>
+        <thead><tr><th>Nota</th><th>Necesitas en ${escapeHtml(semestralCat.label)}</th></tr></thead>
+        <tbody id="dualTableBody">${rowsHtml}</tbody>
       </table>
       ${otherPending.length ? `<div class="note-box">Esta tabla asume que sacas 0% en lo demás que tienes pendiente (${otherPending.map(escapeHtml).join(', ')}). Si también avanzas ahí, necesitarás menos de lo que muestra la tabla.</div>` : ''}
     </div>
