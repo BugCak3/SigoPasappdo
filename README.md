@@ -4,6 +4,16 @@ Tu calculadora de supervivencia académica.
 
 ¿Pasas? ¿No pasas? ¿Todavía hay chance? Esta página te ayuda a responderlo rápido con números reales, usando tus ponderaciones, tus notas actuales y lo que aún te falta por entregar o presentar.
 
+## Live website
+https://fulanoymengano-qlapps.github.io/SigoPasappdo/
+
+## Ejecutar en local
+
+1. Clona o descarga este repo.
+2. Abre index.html en tu navegador.
+
+Opcional: usa Live Server en VS Code para recarga automática.
+
 ## Qué resuelve
 
 - Organiza la materia por categorías: Trabajos, Talleres, Parciales, Semestral y las que quieras agregar.
@@ -46,12 +56,6 @@ Tu calculadora de supervivencia académica.
 
 Sin backend, sin base de datos y sin instalación de dependencias.
 
-## Ejecutar en local
-
-1. Clona o descarga este repo.
-2. Abre index.html en tu navegador.
-
-Opcional: usa Live Server en VS Code para recarga automática.
 
 ## Aviso
 
